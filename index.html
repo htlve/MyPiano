@@ -2,228 +2,180 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Magical Pastel Piano</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>G-RECO Melody Game</title>
     <style>
         :root {
-            --bg-sweet: #fff0f6;
-            --key-white: #ffffff;
-            --key-pink: #ffdeeb;
-            --key-blue: #dcf5ff;
-            --accent-ribbon: #ff85a2;
-            --shadow: rgba(255, 133, 162, 0.3);
+            --bg: #1a1a2e;
+            --white-key: #ffffff;
+            --black-key: #333;
+            --highlight: #ff4d79;
+            --note-color: #00f2ff;
         }
 
         body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            background: var(--bg-sweet);
-            font-family: 'Hiragino Maru Gothic ProN', sans-serif;
+            margin: 0; background: var(--bg); color: white;
+            font-family: 'sans-serif'; overflow: hidden;
+            display: flex; flex-direction: column; height: 100vh;
             touch-action: none;
-            user-select: none;
         }
 
-        /* ヘッダーデザイン */
-        .header {
-            padding: 20px;
-            text-align: center;
-            position: relative;
+        /* 上部コントロール */
+        .controls {
+            padding: 10px; display: flex; gap: 10px; justify-content: center;
+            background: rgba(255,255,255,0.1); z-index: 100;
+        }
+        button {
+            padding: 8px 15px; border-radius: 20px; border: none;
+            background: var(--highlight); color: white; font-weight: bold; cursor: pointer;
         }
 
-        .title-ribbon {
-            background: var(--accent-ribbon);
-            color: white;
-            display: inline-block;
-            padding: 5px 30px;
-            border-radius: 20px;
-            font-weight: bold;
-            box-shadow: 0 4px 0 #e66a85;
-            position: relative;
+        /* ゲーム画面（ノーツが降るエリア） */
+        #game-screen {
+            flex: 1; position: relative; border-bottom: 2px solid var(--highlight);
+            overflow: hidden; background: linear-gradient(to bottom, #1a1a2e, #16213e);
         }
 
-        /* ピアノの土台 */
-        .piano-container {
-            flex: 1;
-            display: flex;
-            align-items: flex-end;
-            padding: 10px;
-            background: white;
-            border-radius: 30px 30px 0 0;
-            box-shadow: 0 -10px 20px var(--shadow);
-            position: relative;
+        .falling-note {
+            position: absolute; width: calc(100% / 14 - 4px); 
+            background: var(--note-color); border-radius: 5px;
+            box-shadow: 0 0 10px var(--note-color);
         }
 
+        /* ピアノ部分 */
         .piano {
-            display: flex;
-            width: 100%;
-            height: 80%;
-            position: relative;
+            display: flex; height: 180px; position: relative; width: 100%;
         }
-
-        /* 鍵盤共通設定 */
         .key {
-            flex: 1;
-            border: 2px solid #f0f0f0;
-            border-radius: 0 0 15px 15px;
-            position: relative;
-            transition: transform 0.1s, background 0.2s;
-            z-index: 1;
+            flex: 1; border: 1px solid #ccc; background: var(--white-key);
+            border-radius: 0 0 5px 5px; position: relative; z-index: 1;
         }
-
-        .key.white {
-            background: white;
-        }
-
-        /* スライド中のハイライト */
-        .key.active-white {
-            background: var(--key-pink) !important;
-            transform: translateY(5px);
-        }
-
         .key.black {
-            position: absolute;
-            width: 8%;
-            height: 55%;
-            background: #6d6d8a;
-            z-index: 2;
-            border-radius: 0 0 10px 10px;
-            border: none;
+            position: absolute; background: var(--black-key); height: 100px;
+            width: calc(100% / 14 * 0.7); z-index: 2; border: 1px solid #000;
         }
+        .key.active { background: var(--highlight) !important; }
 
-        .key.active-black {
-            background: var(--key-blue) !important;
-            transform: translateY(2px);
-        }
-
-        /* 黒鍵の位置 */
-        .b0 { left: 8.5%; }
-        .b1 { left: 21%; }
-        .b3 { left: 46%; }
-        .b4 { left: 58.5%; }
-        .b5 { left: 71%; }
-
-        /* 装飾：キラキラ */
-        .sparkle {
-            position: absolute;
-            top: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 20px;
-            opacity: 0;
-            pointer-events: none;
-        }
-        .active-white .sparkle, .active-black .sparkle {
-            animation: pop 0.5s ease-out;
-        }
-
-        @keyframes pop {
-            0% { opacity: 1; transform: translate(-50%, 0); }
-            100% { opacity: 0; transform: translate(-50%, -30px); }
-        }
+        /* 黒鍵の位置（14個の白鍵に対して） */
+        .b1 { left: 5%; } .b2 { left: 12%; } .b3 { left: 26%; } .b4 { left: 33%; } .b5 { left: 40%; }
+        .b6 { left: 55%; } .b7 { left: 62%; } .b8 { left: 76%; } .b9 { left: 83%; } .b10 { left: 90%; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <div class="title-ribbon">✨ Sweet Melody Piano ✨</div>
+<div class="controls">
+    <button onclick="startGame('twinkle')">きらきら星</button>
+    <button onclick="startGame('minuet')">メヌエット</button>
+    <div id="score" style="line-height: 35px;">Score: 0</div>
 </div>
 
-<div class="piano-container">
-    <div class="piano" id="piano-board">
-        <div class="key white" data-note="261.63"><span class="sparkle">🌸</span></div>
-        <div class="key white" data-note="293.66"><span class="sparkle">⭐</span></div>
-        <div class="key white" data-note="329.63"><span class="sparkle">🍬</span></div>
-        <div class="key white" data-note="349.23"><span class="sparkle">🌸</span></div>
-        <div class="key white" data-note="392.00"><span class="sparkle">⭐</span></div>
-        <div class="key white" data-note="440.00"><span class="sparkle">🍬</span></div>
-        <div class="key white" data-note="493.88"><span class="sparkle">🌸</span></div>
-        <div class="key white" data-note="523.25"><span class="sparkle">⭐</span></div>
+<div id="game-screen"></div>
 
-        <div class="key black b0" data-note="277.18"><span class="sparkle">✨</span></div>
-        <div class="key black b1" data-note="311.13"><span class="sparkle">✨</span></div>
-        <div class="key black b3" data-note="369.99"><span class="sparkle">✨</span></div>
-        <div class="key black b4" data-note="415.30"><span class="sparkle">✨</span></div>
-        <div class="key black b5" data-note="466.16"><span class="sparkle">✨</span></div>
-    </div>
+<div class="piano" id="piano">
+    <div class="key" data-note="261.63"></div><div class="key" data-note="293.66"></div>
+    <div class="key" data-note="329.63"></div><div class="key" data-note="349.23"></div>
+    <div class="key" data-note="392.00"></div><div class="key" data-note="440.00"></div>
+    <div class="key" data-note="493.88"></div><div class="key" data-note="523.25"></div>
+    <div class="key" data-note="587.33"></div><div class="key" data-note="659.25"></div>
+    <div class="key" data-note="698.46"></div><div class="key" data-note="783.99"></div>
+    <div class="key" data-note="880.00"></div><div class="key" data-note="987.77"></div>
 </div>
 
 <script>
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    let isMouseDown = false;
+    const gameScreen = document.getElementById('game-screen');
+    const scoreEl = document.getElementById('score');
+    let score = 0;
+    let gameActive = false;
 
-    // 音を鳴らすメイン関数
-    function playTone(freq, element) {
+    // 音階データ
+    const notes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77];
+    
+    // 曲データ (indexは白鍵の左からの番号)
+    const songs = {
+        twinkle: [0,0,4,4,5,5,4, 3,3,2,2,1,1,0], // きらきら星
+        minuet: [4,0,1,2,3,4,0,0, 5,3,4,5,6,7,0,0] // メヌエット冒頭
+    };
+
+    function playSound(freq) {
         if (audioCtx.state === 'suspended') audioCtx.resume();
-
-        // 視覚効果の付与
-        const activeClass = element.classList.contains('black') ? 'active-black' : 'active-white';
-        element.classList.add(activeClass);
-        setTimeout(() => element.classList.remove(activeClass), 300);
-
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-
-        // サイン波でより柔らかく「ポーン」という音に
-        osc.type = 'sine';
+        osc.type = 'triangle';
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        
-        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
-
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.8);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + 1);
     }
 
-    // マウス・タッチイベントの設定
-    const keys = document.querySelectorAll('.key');
+    function startGame(songKey) {
+        if(gameActive) return;
+        gameActive = true;
+        score = 0;
+        scoreEl.innerText = `Score: ${score}`;
+        let step = 0;
+        const song = songs[songKey];
 
-    keys.forEach(key => {
-        const note = key.getAttribute('data-note');
-
-        // マウス操作
-        key.addEventListener('mousedown', (e) => {
-            isMouseDown = true;
-            playTone(note, key);
-        });
-
-        key.addEventListener('mouseenter', () => {
-            if (isMouseDown) playTone(note, key);
-        });
-
-        // タッチ操作（スライド対応）
-        key.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            playTone(note, key);
-        });
-    });
-
-    // スライド（touchmove）の判定ロジック
-    document.addEventListener('touchmove', (e) => {
-        const touch = e.touches[0];
-        const target = document.elementFromPoint(touch.clientX, touch.clientY);
-        
-        if (target && target.classList.contains('key')) {
-            const note = target.getAttribute('data-note');
-            // 同じ鍵盤をずっと触り続けている間、何度も鳴らないように簡易チェック
-            if (!target.dataset.pressing) {
-                playTone(note, target);
-                target.dataset.pressing = "true";
-                setTimeout(() => delete target.dataset.pressing, 200);
+        const interval = setInterval(() => {
+            if (step >= song.length) {
+                clearInterval(interval);
+                gameActive = false;
+                return;
             }
-        }
-    }, { passive: false });
+            spawnNote(song[step]);
+            step++;
+        }, 800);
+    }
 
-    window.addEventListener('mouseup', () => isMouseDown = false);
-    
-    // 右クリック禁止
-    window.oncontextmenu = (e) => e.preventDefault();
+    function spawnNote(index) {
+        const note = document.createElement('div');
+        note.className = 'falling-note';
+        const keyWidth = gameScreen.offsetWidth / 14;
+        note.style.left = (index * keyWidth + 2) + 'px';
+        note.style.top = '-50px';
+        note.style.height = '40px';
+        gameScreen.appendChild(note);
+
+        let top = -50;
+        const fall = setInterval(() => {
+            top += 4;
+            note.style.top = top + 'px';
+            if (top > gameScreen.offsetHeight - 40) {
+                // 判定ラインに到達
+                note.style.background = '#ffeb3b';
+            }
+            if (top > gameScreen.offsetHeight) {
+                clearInterval(fall);
+                note.remove();
+            }
+        }, 20);
+
+        note.dataset.index = index;
+    }
+
+    // 鍵盤クリック・スライド
+    document.querySelectorAll('.key').forEach((key, i) => {
+        const handlePress = () => {
+            const freq = key.dataset.note;
+            playSound(freq);
+            key.classList.add('active');
+            setTimeout(() => key.classList.remove('active'), 200);
+
+            // 当たり判定
+            const activeNotes = document.querySelectorAll('.falling-note');
+            activeNotes.forEach(n => {
+                const nTop = parseInt(n.style.top);
+                if (n.dataset.index == i && nTop > gameScreen.offsetHeight - 60) {
+                    score += 10;
+                    scoreEl.innerText = `Score: ${score}`;
+                    n.remove();
+                }
+            });
+        };
+        key.addEventListener('mousedown', handlePress);
+        key.addEventListener('touchstart', (e) => { e.preventDefault(); handlePress(); });
+    });
 </script>
 
 </body>
