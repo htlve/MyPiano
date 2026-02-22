@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Web Piano</title>
+    <style>
+        /* CSSで見た目を整える */
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; background: #222; }
+        .piano { display: flex; position: relative; }
+        .key {
+            width: 60px; height: 200px; border: 1px solid #000;
+            background: white; cursor: pointer; border-radius: 0 0 5px 5px;
+            box-sizing: border-box;
+        }
+        .key:active { background: #ddd; }
+        /* 黒鍵の配置 */
+        .key.black {
+            width: 40px; height: 120px; background: black;
+            margin-left: -20px; margin-right: -20px; z-index: 2;
+        }
+        .key.black:active { background: #333; }
+    </style>
+</head>
+<body>
+
+<div class="piano">
+    <div class="key" onclick="playTone(261.63)"></div> <div class="key black" onclick="playTone(277.18)"></div> <div class="key" onclick="playTone(293.66)"></div> <div class="key black" onclick="playTone(311.13)"></div> <div class="key" onclick="playTone(329.63)"></div> <div class="key" onclick="playTone(349.23)"></div> <div class="key black" onclick="playTone(369.99)"></div> <div class="key" onclick="playTone(392.00)"></div> <div class="key black" onclick="playTone(415.30)"></div> <div class="key" onclick="playTone(440.00)"></div> <div class="key black" onclick="playTone(466.16)"></div> <div class="key" onclick="playTone(493.88)"></div> </div>
+
+<script>
+    // ブラウザのオーディオ機能（Web Audio API）を使用
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playTone(freq) {
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.type = 'triangle'; // 音色（sine, square, sawtooth, triangle）
+        oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        
+        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 1);
+    }
+</script>
+
+</body>
+</html>
